@@ -63,3 +63,61 @@ docker exec -u postgres -it pg psql
 
 ## Exiting
 - `\q`: Quit the `psql` session.
+
+
+
+```
+SELECT id, title, image
+FROM ingredients
+LIMIT 5;
+```
+
+
+```
+SELECT id, title, image
+FROM ingredients
+LIMIT 5;
+OFFSET 5;
+
+```
+
+```
+
+SELECT *
+FROM ingredients
+WHERE id <= 10
+  OR id >= 20;
+
+```
+
+```
+SELECT * FROM ingredients ORDER BY id DESC;
+
+
+```
+
+```
+
+SELECT * FROM ingredients WHERE title LIKE '%pota%';
+```
+
+```
+SELECT * FROM ingredients WHERE CONCAT(title, type) LIKE '%fruit%';
+```
+
+```
+SELECT * FROM ingredients WHERE LOWER(CONCAT(title, type)) LIKE LOWER('%FrUiT%');
+
+```
+
+### better way, with ILIKE. same as above but case insensitive.
+```
+SELECT * FROM ingredients WHERE CONCAT(title, type) ILIKE '%FrUiT%';
+
+
+```
+
+```
+SELECT * FROM ingredients WHERE title ILIKE 'c%';
+
+```
