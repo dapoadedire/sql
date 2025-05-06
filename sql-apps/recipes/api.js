@@ -1,6 +1,9 @@
 const path = require("path");
 const express = require("express");
 const router = express.Router();
+const { Pool } = require("pg");
+
+
 
 // client side static assets
 router.get("/", (_, res) => res.sendFile(path.join(__dirname, "./index.html")));
@@ -22,6 +25,13 @@ router.get("/detail", (_, res) =>
  */
 
 // connect to postgres
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "recipeguru",
+  password: "lol",
+  port: 5432,
+});
 
 router.get("/search", async function (req, res) {
   console.log("search recipes");
@@ -50,8 +60,26 @@ router.get("/get", async (req, res) => {
   // return the title as title
   // return the body as body
   // if no row[0] has no photo, return it as default.jpg
+  try {
 
-  res.status(501).json({ status: "not implemented" });
+    const { rows } = await pool.query(
+      `
+      SELECT r.title, r.body, COALESCE(p.url, 'default.jpg') AS photo_url,
+             i.name AS ingredient_name, i.image AS ingredient_image,
+             i.type AS ingredient_type, i.title AS ingredient_title
+      FROM recipes r
+      LEFT JOIN photos p ON r.recipe_id = p.recipe_id
+      LEFT JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
+      LEFT JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+      WHERE r.recipe_id = $1`,
+      [recipeId]
+    );
+   
+    res.status(200).json({ status: "ok", rows });
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ status: "error", message: "Internal server error" });
+  }
 });
 /**
  * Student code ends here
