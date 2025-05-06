@@ -400,3 +400,17 @@ LEFT JOIN
 ON
   r.recipe_id = rp.recipe_id;
 ```
+
+
+```
+SELECT DISTINCT ON (r.recipe_id)
+  r.title,
+  COALESCE(rp.url, 'default.jpg') AS url
+FROM
+  recipes r
+LEFT JOIN
+  recipes_photos rp
+ON
+  r.recipe_id = rp.recipe_id;
+```
+
