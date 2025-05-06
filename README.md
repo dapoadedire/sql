@@ -200,7 +200,6 @@ SELECT recipes.title, recipes.body, recipes_photos.url
     recipes_photos.recipe_id = recipes.recipe_id
 ```
 
-
 this is a right join. it returns all rows from the right table (recipes) and the matched rows from the left table (recipes_photos). if there is no match, NULL values are returned for columns from the left table.
 
 ```
@@ -213,3 +212,150 @@ SELECT recipes.title, recipes.body, recipes_photos.url
 ```
 
 There's also natural joins, cross joins, and self joins. But those are less common.
+
+## Foreign Keys and Managing References
+
+```
+DELETE FROM recipes WHERE recipe_id = 5;
+```
+
+Check the photos, it's still there.
+
+```
+SELECT * FROM recipes_photos WHERE recipe_id = 5;
+```
+
+This is bad, we don't want orphaned records. We want to delete the photos too.
+
+```
+
+So, let's drop the table and recreate it with a foreign key constraint.
+
+```
+
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS recipes_photos;
+CREATE TABLE recipes (
+recipe_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+title VARCHAR ( 255 ) UNIQUE NOT NULL,
+body TEXT
+);
+INSERT INTO recipes
+(title, body)
+VALUES
+('cookies', 'very yummy'),
+('empanada','ugh so good'),
+('jollof rice', 'spectacular'),
+('shakshuka','absolutely wonderful'),
+('khachapuri', 'breakfast perfection'),
+('xiao long bao', 'god I want some dumplings right now');
+
+```
+
+```
+CREATE TABLE recipes_photos (
+  photo_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  recipe_id INTEGER REFERENCES recipes(recipe_id) ON DELETE CASCADE,
+  url VARCHAR(255) NOT NULL
+);
+```
+
+Okay, so we have a few things here
+
+The REFERENCES portion means it's going to be a foreign key. You tell it what it's going to match up to. In our case recipes is the table and recipe_id is the name of the column it'll match. In our case those are the same name, but it doesn't have to be. It must be the primary key of the other table.
+Then you need to tell it what to do when you delete something. With ON DELETE CASCADE you say "if the row in the other table gets deleted, delete this one too." So if we delete something from recipes, it will automatically delete all its photos. Pretty cool, right?
+You can also do ON DELETE SET NULL which does exactly what it says it does. There's also ON DELETE NO ACTION which will error out if you try to delete something from recipes if there are still photos left. This forces developers to clean up photos before deleting recipes. That can be helpful to.
+There's also ON UPDATEs if you need to handle some synced state state between the two tables.
+If you're going to have have two tables reference each other, use foreign keys where possible. It makes useful constraints to make sure delete and update behaviors are intentional and it makes the queries faster.
+
+
+
+```
+
+INSERT INTO recipes_photos
+  (recipe_id, url)
+VALUES
+  (1, 'cookies1.jpg'),
+  (1, 'cookies2.jpg'),
+  (1, 'cookies3.jpg'),
+  (1, 'cookies4.jpg'),
+  (1, 'cookies5.jpg'),
+  (2, 'empanada1.jpg'),
+  (2, 'empanada2.jpg'),
+  (3, 'jollof1.jpg'),
+  (4, 'shakshuka1.jpg'),
+  (4, 'shakshuka2.jpg'),
+  (4, 'shakshuka3.jpg'),
+  (5, 'khachapuri1.jpg'),
+  (5, 'khachapuri2.jpg');
+```
+
+Now let's see what happens when we delete a recipe.
+
+```
+SELECT * FROM recipes_photos WHERE recipe_id = 5;
+DELETE FROM recipes WHERE recipe_id = 5;
+SELECT * FROM recipes_photos WHERE recipe_id = 5;
+```
+
+### Many to many
+
+```
+CREATE TABLE recipe_ingredients (
+recipe_id INT REFERENCES recipes(recipe_id) ON DELETE NO ACTION,
+ingredient_id INT REFERENCES ingredients(id) ON DELETE NO ACTION,
+CONSTRAINT recipe_ingredients_pk PRIMARY KEY (recipe_id, ingredient_id)
+);
+
+```
+
+
+```
+INSERT INTO recipe_ingredients
+  (recipe_id, ingredient_id)
+VALUES
+  (1, 10),
+  (1, 11),
+  (1, 13),
+  (2, 5),
+  (2, 13);
+```
+
+
+```
+SELECT
+  i.title AS ingredient_title,
+  i.image AS ingredient_image,
+  i.type AS ingredient_type
+FROM
+  recipe_ingredients ri
+INNER JOIN
+  ingredients i
+ON
+  i.id = ri.ingredient_id
+WHERE
+  ri.recipe_id = 1;
+
+```
+
+```
+SELECT
+  i.title AS ingredient_title,
+  i.image AS ingredient_image,
+  i.type AS ingredient_type,
+  r.title AS recipe_title,
+  r.body AS recipe_body,
+  r.recipe_id AS rid,
+  i.id AS iid
+FROM
+  recipe_ingredients ri
+INNER JOIN
+  ingredients i
+ON
+  i.id = ri.ingredient_id
+INNER JOIN
+  recipes r
+ON
+  r.recipe_id = ri.recipe_id;
+
+```
