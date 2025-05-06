@@ -129,3 +129,87 @@ SELECT * FROM ingredients WHERE title ILIKE 'c%';
 ```
 1; DROP TABLE ingredients; -- this will delete the table
 ```
+
+## Relationships
+
+```
+CREATE TABLE recipes (
+  recipe_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  title VARCHAR ( 255 ) UNIQUE NOT NULL,
+  body TEXT
+);
+```
+
+```
+INSERT INTO recipes
+  (title, body)
+VALUES
+  ('cookies', 'very yummy'),
+  ('empanada','ugh so good');
+```
+
+Another table:
+
+```
+CREATE TABLE recipes_photos (
+  photo_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  recipe_id INTEGER,
+  url VARCHAR(255) NOT NULL
+);
+```
+
+```
+INSERT INTO recipes_photos
+  (recipe_id, url)
+VALUES
+  (1, 'cookies1.jpg'),
+  (1, 'cookies2.jpg'),
+  (1, 'cookies5.jpg'),
+  (2, 'empanada1.jpg'),
+  (2, 'empanada2.jpg');
+```
+
+```
+SELECT title, body FROM recipes WHERE recipe_id = 4;
+SELECT url FROM recipes_photos WHERE recipe_id = 4;
+```
+
+Now, doing it with a join:
+
+this is a join.
+inner join is the most common type of join. it only returns rows that have matching values in both tables.
+so it won't return any recipes that don't have photos.
+
+```
+SELECT recipes.title, recipes.body, recipes_photos.url
+  FROM recipes_photos
+  INNER JOIN
+    recipes
+  ON
+    recipes_photos.recipe_id = recipes.recipe_id
+```
+
+this is a left join. it returns all rows from the left table (recipes_photos) and the matched rows from the right table (recipes). if there is no match, NULL values are returned for columns from the right table.
+
+```
+SELECT recipes.title, recipes.body, recipes_photos.url
+  FROM recipes_photos
+  LEFT JOIN
+    recipes
+  ON
+    recipes_photos.recipe_id = recipes.recipe_id
+```
+
+
+this is a right join. it returns all rows from the right table (recipes) and the matched rows from the left table (recipes_photos). if there is no match, NULL values are returned for columns from the left table.
+
+```
+SELECT recipes.title, recipes.body, recipes_photos.url
+  FROM recipes_photos
+  RIGHT JOIN
+    recipes
+  ON
+    recipes_photos.recipe_id = recipes.recipe_id
+```
+
+There's also natural joins, cross joins, and self joins. But those are less common.
