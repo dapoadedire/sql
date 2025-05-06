@@ -253,11 +253,13 @@ VALUES
 ```
 
 ```
+
 CREATE TABLE recipes_photos (
-  photo_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  recipe_id INTEGER REFERENCES recipes(recipe_id) ON DELETE CASCADE,
-  url VARCHAR(255) NOT NULL
+photo_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+recipe_id INTEGER REFERENCES recipes(recipe_id) ON DELETE CASCADE,
+url VARCHAR(255) NOT NULL
 );
+
 ```
 
 Okay, so we have a few things here
@@ -273,34 +275,38 @@ If you're going to have have two tables reference each other, use foreign keys w
 ```
 
 INSERT INTO recipes_photos
-  (recipe_id, url)
+(recipe_id, url)
 VALUES
-  (1, 'cookies1.jpg'),
-  (1, 'cookies2.jpg'),
-  (1, 'cookies3.jpg'),
-  (1, 'cookies4.jpg'),
-  (1, 'cookies5.jpg'),
-  (2, 'empanada1.jpg'),
-  (2, 'empanada2.jpg'),
-  (3, 'jollof1.jpg'),
-  (4, 'shakshuka1.jpg'),
-  (4, 'shakshuka2.jpg'),
-  (4, 'shakshuka3.jpg'),
-  (5, 'khachapuri1.jpg'),
-  (5, 'khachapuri2.jpg');
+(1, 'cookies1.jpg'),
+(1, 'cookies2.jpg'),
+(1, 'cookies3.jpg'),
+(1, 'cookies4.jpg'),
+(1, 'cookies5.jpg'),
+(2, 'empanada1.jpg'),
+(2, 'empanada2.jpg'),
+(3, 'jollof1.jpg'),
+(4, 'shakshuka1.jpg'),
+(4, 'shakshuka2.jpg'),
+(4, 'shakshuka3.jpg'),
+(5, 'khachapuri1.jpg'),
+(5, 'khachapuri2.jpg');
+
 ```
 
 Now let's see what happens when we delete a recipe.
 
 ```
-SELECT * FROM recipes_photos WHERE recipe_id = 5;
+
+SELECT _ FROM recipes_photos WHERE recipe_id = 5;
 DELETE FROM recipes WHERE recipe_id = 5;
-SELECT * FROM recipes_photos WHERE recipe_id = 5;
+SELECT _ FROM recipes_photos WHERE recipe_id = 5;
+
 ```
 
 ### Many to many
 
 ```
+
 CREATE TABLE recipe_ingredients (
 recipe_id INT REFERENCES recipes(recipe_id) ON DELETE NO ACTION,
 ingredient_id INT REFERENCES ingredients(id) ON DELETE NO ACTION,
@@ -311,51 +317,86 @@ CONSTRAINT recipe_ingredients_pk PRIMARY KEY (recipe_id, ingredient_id)
 
 
 ```
+
 INSERT INTO recipe_ingredients
-  (recipe_id, ingredient_id)
+(recipe_id, ingredient_id)
 VALUES
-  (1, 10),
-  (1, 11),
-  (1, 13),
-  (2, 5),
-  (2, 13);
+(1, 10),
+(1, 11),
+(1, 13),
+(2, 5),
+(2, 13);
+
 ```
 
 
 ```
+
 SELECT
-  i.title AS ingredient_title,
-  i.image AS ingredient_image,
-  i.type AS ingredient_type
+i.title AS ingredient_title,
+i.image AS ingredient_image,
+i.type AS ingredient_type
 FROM
-  recipe_ingredients ri
+recipe_ingredients ri
 INNER JOIN
-  ingredients i
+ingredients i
 ON
-  i.id = ri.ingredient_id
+i.id = ri.ingredient_id
 WHERE
-  ri.recipe_id = 1;
+ri.recipe_id = 1;
 
 ```
 
 ```
+
 SELECT
-  i.title AS ingredient_title,
-  i.image AS ingredient_image,
-  i.type AS ingredient_type,
-  r.title AS recipe_title,
-  r.body AS recipe_body,
-  r.recipe_id AS rid,
-  i.id AS iid
+i.title AS ingredient_title,
+i.image AS ingredient_image,
+i.type AS ingredient_type,
+r.title AS recipe_title,
+r.body AS recipe_body,
+r.recipe_id AS rid,
+i.id AS iid
 FROM
-  recipe_ingredients ri
+recipe_ingredients ri
 INNER JOIN
-  ingredients i
+ingredients i
 ON
-  i.id = ri.ingredient_id
+i.id = ri.ingredient_id
 INNER JOIN
-  recipes r
+recipes r
 ON
-  r.recipe_id = ri.recipe_id;
+r.recipe_id = ri.recipe_id;
 
+```
+
+
+## Constraints
+
+```
+ALTER TABLE ingredients
+ADD CONSTRAINT type_enums
+CHECK
+   (type IN ('meat','fruit','vegetable','other'));
+```
+
+
+
+DISTINCT
+
+```
+
+SELECT DISTINCT ON (recipe_id) * FROM recipes_photos;
+
+```
+
+```
+SELECT DISTINCT ON (r.recipe_id)
+  *
+FROM
+  recipes r
+LEFT JOIN
+  recipes_photos rp
+ON
+  r.recipe_id = rp.recipe_id;
 ```
