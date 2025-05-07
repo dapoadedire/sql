@@ -495,3 +495,102 @@ type
 HAVING COUNT(type) > 10;
 
 ```
+
+
+## Functions
+
+```
+SELECT
+  r.title
+FROM 
+recipe_ingredients ri
+INNER JOIN
+  recipes r
+ON
+  r.recipe_id = ri.recipe_id
+GROUP BY
+  r.title
+HAVING
+COUNT(r.title) BETWEEN 4 AND 6;
+```
+
+```
+CREATE OR REPLACE FUNCTION get_recipe_count(low INT, high INT)
+RETURNS
+  SETOF VARCHAR
+  LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    r.title
+  FROM
+    recipe_ingredients ri
+  INNER JOIN
+    recipes r
+  ON
+    r.recipe_id = ri.recipe_id
+  GROUP BY
+    r.title
+  HAVING
+    COUNT(r.title) BETWEEN low AND high;
+END;
+$$; 
+
+```
+
+And then we can call it like this:
+
+```
+SELECT * FROM get_recipe_count(4, 6);
+```
+
+Note:
+### Is Filtering in the Database More Efficient than Filtering in the Frontend?
+
+Yes, filtering data in the database is generally more efficient than doing it in the frontend. Here's why:
+
+1. **Reduced Data Transfer**: By filtering in the database, only the relevant data is sent to the frontend, reducing the amount of data transferred over the network.
+
+2. **Database Optimization**: Databases are optimized for querying and filtering large datasets. They use indexes, caching, and query optimization techniques to process data efficiently.
+
+3. **Frontend Resource Usage**: Filtering large datasets in the frontend can consume significant memory and processing power, potentially slowing down the user interface.
+
+4. **Scalability**: As the dataset grows, filtering in the database scales better than transferring large datasets to the frontend for processing.
+
+The provided function `get_recipe_count` is a good example of leveraging the database for efficient filtering. It uses SQL's `GROUP BY` and `HAVING` clauses to filter recipes based on the count of associated ingredients, ensuring only the necessary data is returned to the frontend.
+
+
+
+```
+DROP FUNCTION IF EXISTS get_recipe_count;
+```
+
+## Procedures
+```
+CREATE PROCEDURE
+  set_null_ingredient_images_to_default()
+LANGUAGE
+  SQL
+AS
+$$
+  UPDATE
+    ingredients
+  SET
+    image = 'default.jpg'
+  WHERE
+    image IS NULL;
+$$;
+
+```
+
+to call it:
+
+```
+CALL set_null_ingredient_images_to_default();
+```
+
+
+```
+SELECT * FROM ingredients WHERE image IS NULL;
+```
