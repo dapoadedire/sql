@@ -227,8 +227,6 @@ SELECT * FROM recipes_photos WHERE recipe_id = 5;
 
 This is bad, we don't want orphaned records. We want to delete the photos too.
 
-```
-
 So, let's drop the table and recreate it with a foreign key constraint.
 
 ```
@@ -269,8 +267,6 @@ Then you need to tell it what to do when you delete something. With ON DELETE CA
 You can also do ON DELETE SET NULL which does exactly what it says it does. There's also ON DELETE NO ACTION which will error out if you try to delete something from recipes if there are still photos left. This forces developers to clean up photos before deleting recipes. That can be helpful to.
 There's also ON UPDATEs if you need to handle some synced state state between the two tables.
 If you're going to have have two tables reference each other, use foreign keys where possible. It makes useful constraints to make sure delete and update behaviors are intentional and it makes the queries faster.
-
-
 
 ```
 
@@ -315,7 +311,6 @@ CONSTRAINT recipe_ingredients_pk PRIMARY KEY (recipe_id, ingredient_id)
 
 ```
 
-
 ```
 
 INSERT INTO recipe_ingredients
@@ -328,7 +323,6 @@ VALUES
 (2, 13);
 
 ```
-
 
 ```
 
@@ -370,7 +364,6 @@ r.recipe_id = ri.recipe_id;
 
 ```
 
-
 ## Constraints
 
 ```
@@ -379,8 +372,6 @@ ADD CONSTRAINT type_enums
 CHECK
    (type IN ('meat','fruit','vegetable','other'));
 ```
-
-
 
 DISTINCT
 
@@ -401,7 +392,6 @@ ON
   r.recipe_id = rp.recipe_id;
 ```
 
-
 ```
 SELECT DISTINCT ON (r.recipe_id)
   r.title,
@@ -414,3 +404,94 @@ ON
   r.recipe_id = rp.recipe_id;
 ```
 
+## JSONB
+
+```
+ALTER TABLE recipes
+ADD COLUMN meta JSONB;
+```
+
+```
+UPDATE
+  recipes
+SET
+  meta='{ "tags": ["chocolate", "dessert", "cake"] }'
+WHERE
+  recipe_id=16;
+
+UPDATE
+  recipes
+SET
+  meta='{ "tags": ["dessert", "cake"] }'
+WHERE
+  recipe_id=20;
+
+UPDATE
+  recipes
+SET
+  meta='{ "tags": ["dessert", "fruit"] }'
+WHERE
+  recipe_id=45;
+
+UPDATE
+  recipes
+SET
+  meta='{ "tags": ["dessert", "fruit"] }'
+WHERE
+  recipe_id=47;
+```
+
+```
+
+
+SELECT meta -> 'tags' FROM recipes WHERE meta IS NOT NULL;
+```
+
+```
+
+SELECT meta -> 'tags' -> 0 AS first_tag FROM recipes WHERE meta IS NOT NULL;
+
+```
+
+```
+SELECT recipe_id, title, meta -> 'tags' FROM recipes WHERE meta -> 'tags' ? 'cake';
+SELECT recipe_id, title, meta -> 'tags' FROM recipes WHERE meta -> 'tags' @> '"cake"';
+
+
+
+```
+
+## Aggregation
+
+```
+SELECT COUNT(*) FROM ingredients;
+
+
+```
+
+```
+
+SELECT COUNT(DISTINCT type) FROM ingredients;
+```
+
+```
+SELECT
+type, COUNT(type)
+FROM
+ingredients
+GROUP BY
+type;
+```
+
+```
+SELECT
+type, COUNT(type)
+FROM
+ingredients
+WHERE
+image IS NOT NULL
+GROUP BY
+type
+HAVING COUNT(type) > 10;
+
+```
